@@ -13,6 +13,7 @@ import java.util.Map;
 
 public class GetProductLists {
 
+//    private  String dirStr = "/out";
     private final Logger logger = LoggerFactory.getLogger(GetProductLists.class);
 
     private void getFileUrls(String urlStr, String dirStr) {
@@ -25,26 +26,30 @@ public class GetProductLists {
                         int a = l.indexOf("href=\"") + 6;
                         int b = l.substring(a).indexOf("\"");
                         String targetUrl = l.substring(a, a + b);
-                        String targetFile = dirStr + "/" + targetUrl.substring(targetUrl.lastIndexOf("/") + 1);
-                        HttpURLConnection connection = getHttpURLConnection(targetUrl);
-                        int code = connection.getResponseCode();
-                        if (code == 301) {
-                            Map<String, List<String>> headers = connection.getHeaderFields();
-                            logger.warn("url relocated "+targetUrl + " to " + headers.get("Location").get(0) );
-                            connection = getHttpURLConnection(headers.get("Location").get(0));
-                            code = connection.getResponseCode();
-                        }
-                        if( code == 200 ) {
-                            logger.info("copying " + connection.getURL().toString() + " to "+targetFile );
-                            getData(targetFile, connection);
-                        } else {
-                            logger.error(" failed to connect to url " + connection.getURL());
-                        }
+                        saveUrl(dirStr, targetUrl);
                     }
                 }
             }
         } catch (IOException e) {
             logger.error("FATAL product list url not found for broken\n"+e);
+        }
+    }
+
+    private void saveUrl(String dirStr, String targetUrl) throws IOException {
+        String targetFile = dirStr + "/" + targetUrl.substring(targetUrl.lastIndexOf("/") + 1);
+        HttpURLConnection connection = getHttpURLConnection(targetUrl);
+        int code = connection.getResponseCode();
+        if (code == 301) {
+            Map<String, List<String>> headers = connection.getHeaderFields();
+            logger.warn("url relocated "+ targetUrl + " to " + headers.get("Location").get(0) );
+            connection = getHttpURLConnection(headers.get("Location").get(0));
+            code = connection.getResponseCode();
+        }
+        if( code == 200 ) {
+            logger.info("copying " + connection.getURL().toString() + " to "+targetFile );
+            getData(targetFile, connection);
+        } else {
+            logger.error(" failed to connect to url " + connection.getURL());
         }
     }
 
@@ -72,6 +77,5 @@ public class GetProductLists {
         GetProductLists getProductLists = new GetProductLists();
         getProductLists.getFileUrls( args[0], args[1] );
     }
-
 
 }
